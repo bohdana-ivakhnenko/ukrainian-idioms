@@ -72,6 +72,18 @@ class IdiomThesaurus:
 
         self.provide_results()
 
+        if self.next_round():
+            self.__init__(file=self.file)
+
+    @staticmethod
+    def next_round():
+        print('Виконати ще один пошук? (так/ні)')
+        answer = input().strip().lower()
+        answers = {True: ('так', 'yes', '1'),
+                   False: ('ні', 'no', '0')}
+        if answer in answers[True]:
+            return True
+
     def initialize(self):
         with open(self.file, 'r', encoding='utf-8') as file:
             reader = csv.reader(file, delimiter='\t')
@@ -257,4 +269,3 @@ class IdiomThesaurus:
 
 if __name__ == '__main__':
     IdiomThesaurus()
-    
