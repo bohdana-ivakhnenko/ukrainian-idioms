@@ -18,26 +18,26 @@ class IdiomThesaurus:
         'time': 'час',
         'change': 'зміна',
         'causation': 'причинновість',
-        'affections': 'емоції',
-        'affections in general': 'загалом',
-        'personal': 'особисті',
-        'sympathetic': 'співчуття',
-        'moral': 'моральні',
-        'religious': 'релігійні',
-        'intellect': 'інтелект',
+        'affections': 'емоції та моральні відчуття',
+        'affections in general': 'відчуття загалом',
+        'personal': 'особистісні відчуття',
+        'sympathetic': 'відчуття до інших',
+        'moral': 'мораль',
+        'religious': 'релігія',
+        'intellect': 'інтелектуальні здібності',
         'formation of ideas': 'формування ідей',
-        'communication of ideas': 'обмін ідеями',
+        'communication of ideas': 'висловлювання ідей',
         'matter': 'матерія',
         'generally': 'загалом',
         'inorganic': 'неорганічна',
         'organic': 'органічна',
         'space': 'простір',
-        'dimensions': 'виміри',
+        'dimensions': 'розміри',
         'form': 'форма',
         'motion': 'рух',
-        'volition': 'вольовий акт',
-        'individual': 'індивідуальний',
-        'intersocial': 'соціальний'
+        'volition': 'волевиявлення',
+        'individual': 'індивідуальне',
+        'intersocial': 'соціальне'
     }
     _uk_en = {value: key for key, value in _en_uk.items()}
 
@@ -236,7 +236,6 @@ class IdiomThesaurus:
                        'citation', 'source')
             file = open(f"queries/{self.get_file_name()}.tsv", "w")
             writer = csv.writer(file, delimiter='\t', lineterminator='\n')
-
             writer.writerow(headers)
 
         for class_, sections in self.idiom_groups.items():
