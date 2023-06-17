@@ -8,8 +8,17 @@ alphabet = AlphabetDetector()
 
 
 class IdiomThesaurus:
-    _en_uk = {
+    _en_uk_classes = {
         'abstract relations': 'абстрактні відношення',
+        'affections': 'емоції та моральні відчуття',
+        'intellect': 'інтелектуальні здібності',
+        'matter': 'матерія',
+        'space': 'простір',
+        'volition': 'волевиявлення'
+    }
+    _uk_en_classes = {value: key for key, value in _en_uk_classes.items()}
+
+    _en_uk_sections = {
         'existence': 'існування',
         'relation': 'відношення',
         'quantity': 'кількість',
@@ -18,16 +27,13 @@ class IdiomThesaurus:
         'time': 'час',
         'change': 'зміна',
         'causation': 'причинновість',
-        'affections': 'емоції та моральні відчуття',
         'affections in general': 'відчуття загалом',
         'personal': 'особистісні відчуття',
         'sympathetic': 'відчуття до інших',
         'moral': 'мораль',
         'religious': 'релігія',
-        'intellect': 'інтелектуальні здібності',
         'formation of ideas': 'формування ідей',
         'communication of ideas': 'висловлювання ідей',
-        'matter': 'матерія',
         'generally': 'загалом',
         'inorganic': 'неорганічна',
         'organic': 'органічна',
@@ -35,11 +41,9 @@ class IdiomThesaurus:
         'dimensions': 'розміри',
         'form': 'форма',
         'motion': 'рух',
-        'volition': 'волевиявлення',
         'individual': 'індивідуальне',
         'intersocial': 'соціальне'
     }
-    _uk_en = {value: key for key, value in _en_uk.items()}
 
     _classes_sections = {
         'abstract relations': ('existence', 'relation', 'quantity', 'order',
@@ -51,6 +55,10 @@ class IdiomThesaurus:
         'space': ('generally', 'dimensions', 'form', 'motion'),
         'volition': ('individual', 'intersocial')
     }
+
+    _all_options = ['шукати в усіх класах', 'в усіх класах', 'усі', 'всі',
+                   'шукати в усіх секціях', 'в усіх секціях', 'усюди',
+                   'шукати в усіх', 'шукати всюди', 'в усіх', 'всюди']
 
     def __init__(self, file='sum-idioms-annotated.tsv'):
         self.file = file
@@ -92,74 +100,69 @@ class IdiomThesaurus:
 
     @staticmethod
     def answer_not_appropriate(answer, categories):
-        all_options = ['шукати в усіх класах', 'в усіх класах', 'усі', 'всі',
-                       'шукати в усіх секціях', 'в усіх секціях', 'усюди',
-                       'шукати в усіх', 'шукати всюди', 'в усіх', 'всюди']
+        categories_both = list(categories.keys()) + list(categories.values())
 
         words = answer.isalpha() and not (answer.isdigit() or
-                                          (answer.lower() in list(IdiomThesaurus._uk_en.keys()) +
-                                                             list(IdiomThesaurus._en_uk.keys())
-                                           and IdiomThesaurus._uk_en[answer].lower() in categories) or
-                                          answer in categories or
-                                          answer.lower() in all_options)
-        number = (answer.startswith('-') or (answer.isdigit() and
-                                             not int(answer) <= len(categories)+1))
-        unknown = not (answer.isalpha() or answer.isdigit())
+                                          answer.lower() in categories_both + IdiomThesaurus._all_options)
+        number = answer.strip('-').isdigit() and not (0 < int(answer) <= len(categories)+1)
+        unknown = not answer.replace(" ", "").isalnum()
         return words or number or unknown
+
+    @staticmethod
+    def get_category(answer, categories):
+        if (answer.isdigit() and int(answer) == len(categories) + 1) or \
+                answer in IdiomThesaurus._all_options:
+            return 'усі'
+        if answer.isdigit():
+            return list(categories.values())[int(answer) - 1]
+        if alphabet.only_alphabet_chars(answer, "LATIN") and \
+                answer in categories.values():
+            return answer
+        if alphabet.only_alphabet_chars(answer, "CYRILLIC") and \
+                answer in categories.keys():
+            return categories[answer]
+        return None
 
     def get_query(self):
         if not self.class_:
-            classes = self._classes_sections.keys()
+            classes = IdiomThesaurus._uk_en_classes
             print('Виберіть номер класу або напишіть сам клас:')
-            [print(f'{index + 1}. {IdiomThesaurus._en_uk[class_]}') for index, class_ in enumerate(classes)]
+            [print(f'{index + 1}. {class_}') for index, class_ in enumerate(classes.keys())]
             print(f'{len(classes) + 1}. шукати в усіх класах')
             answer_class = input().strip()
             if self.answer_not_appropriate(answer_class, classes):
                 print('\nВи ввели неправильне числове значення або вказали неіснуючий клас.')
                 print('Спробуйте ще раз!', end='\n\n')
-                self.get_query()
+                return self.get_query()
             else:
-                if answer_class.isdigit():
-                    self.class_ = list(classes)[int(answer_class) - 1]
-                elif alphabet.only_alphabet_chars(answer_class, "CYRILLIC") \
-                        and answer_class in IdiomThesaurus._uk_en.keys():
-                    self.class_ = IdiomThesaurus._uk_en[answer_class]
-                elif alphabet.only_alphabet_chars(answer_class, "LATIN") \
-                        and answer_class in IdiomThesaurus._en_uk.keys():
-                    self.class_ = answer_class
-                else:
-                    self.class_ = "усі"
-                    self.section_ = "усі"
+                self.class_ = self.get_category(answer_class, classes)
+            if self.class_ == 'усі':
+                self.section_ = 'усі'
 
         if self.class_ and not self.section_:
-            sections = IdiomThesaurus._classes_sections[self.class_]
+            matching_sections = IdiomThesaurus._classes_sections[self.class_]
+            _en_uk_matching_sections = {en: uk for en, uk in IdiomThesaurus._en_uk_sections.items()
+                                        if en in matching_sections}
             print('Можете також обрати секцію:')
-            [print(f'{index + 1}. {IdiomThesaurus._en_uk[section_]}') for index, section_ in enumerate(sections)]
-            print(f'{len(sections) + 1}. шукати в усіх секціях')
+            [print(f'{index + 1}. {_en_uk_matching_sections[section]}')
+             for index, section in enumerate(matching_sections)]
+            print(f'{len(matching_sections) + 1}. шукати в усіх секціях')
             answer_section = input().strip()
-            if self.answer_not_appropriate(answer_section, sections):
+            if self.answer_not_appropriate(answer_section, _en_uk_matching_sections):
                 print('\nВи ввели неправильне числове значення або вказали неіснуючу секцію.')
                 print('Спробуйте ще раз!', end='\n\n')
-                self.get_query()
+                return self.get_query()
             else:
-                if answer_section.isdigit():
-                    self.section_ = list(sections)[int(answer_section) - 1]
-                elif alphabet.only_alphabet_chars(answer_section, "CYRILLIC") \
-                        and answer_section in IdiomThesaurus._uk_en.keys():
-                    self.section_ = IdiomThesaurus._uk_en[answer_section]
-                elif alphabet.only_alphabet_chars(answer_section, "LATIN") \
-                        and answer_section in IdiomThesaurus._en_uk.keys():
-                    self.section_ = answer_section
-                else:
-                    self.section_ = "усі"
+                self.section_ = self.get_category(answer_section,
+                                                  {uk: en for en, uk in _en_uk_matching_sections.items()})
 
-        print("Напишіть тег для пошуку, якщо хочете зберегти результат у файл:")
+        print('Напишіть тег для пошуку, якщо хочете зберегти результат у файл:')
         answer_tag = input().strip()
         self.search_tag = answer_tag
 
         if not (self.class_ and self.section_):
             print('Упссс, щось пішло не так, спробуйте ще раз!')
-            self.get_query()
+            return self.get_query()
         return
 
     def get_idioms(self):
