@@ -16,7 +16,6 @@ class IdiomThesaurus:
         'space': 'простір',
         'volition': 'волевиявлення'
     }
-    _uk_en_classes = {value: key for key, value in _en_uk_classes.items()}
 
     _en_uk_sections = {
         'existence': 'існування',
@@ -125,7 +124,7 @@ class IdiomThesaurus:
 
     def get_query(self):
         if not self.class_:
-            classes = IdiomThesaurus._uk_en_classes
+            classes = {value: key for key, value in IdiomThesaurus._en_uk_classes.items()} 
             print('Виберіть номер класу або напишіть сам клас:')
             [print(f'{index + 1}. {class_}') for index, class_ in enumerate(classes.keys())]
             print(f'{len(classes) + 1}. шукати в усіх класах')
@@ -156,11 +155,11 @@ class IdiomThesaurus:
                 self.section_ = self.get_category(answer_section,
                                                   {uk: en for en, uk in _en_uk_matching_sections.items()})
 
-        print('Напишіть тег для пошуку, якщо хочете зберегти результат у файл:')
-        answer_tag = input().strip()
-        self.search_tag = answer_tag
-
-        if not (self.class_ and self.section_):
+        if self.class_ and self.section_:
+            print('Напишіть тег для пошуку, якщо хочете зберегти результат у файл:')
+            answer_tag = input().strip()
+            self.search_tag = answer_tag
+        else:
             print('Упссс, щось пішло не так, спробуйте ще раз!')
             return self.get_query()
         return
